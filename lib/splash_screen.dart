@@ -26,7 +26,7 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: Color(0xFFB0DFF7), // Background color
       body: Center(
         child: Image.asset(
-          'assets/logo.png', // Replace with your asset image path
+          'assets/app_icon2.png', // Replace with your asset image path
           width: 200,
           height: 200,
         ),

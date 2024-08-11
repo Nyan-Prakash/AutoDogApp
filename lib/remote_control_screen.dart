@@ -32,23 +32,26 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
       }
     }
     if (targetCharacteristic == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No writable characteristic found!')),
-      );
+      _showFeedback('No writable characteristic found!');
     }
   }
 
   void sendCommand(int value) async {
     if (targetCharacteristic != null) {
       await targetCharacteristic!.write([value]);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Sent command $value')),
-      );
+      _showFeedback('Sent command $value');
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Characteristic not found!')),
-      );
+      _showFeedback('Characteristic not found!');
     }
+  }
+
+  void _showFeedback(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: Duration(seconds: 1), // Message stays for 1 second
+      ),
+    );
   }
 
   Widget buildCommandButton(String label, int command) {

@@ -54,11 +54,11 @@ class HomeScreen extends StatelessWidget {
             SizedBox(height: 10),
             Row(
               children: [
-                _buildStatCard('Training Level', 'Advanced', Color(0xFFDEE7F0)),
+                _buildStatCard('Training Level', 'Expert', Color(0xFFDEE7F0)),
                 SizedBox(width: 8),
-                _buildStatCard('Sessions Completed', '15', Color(0xFFDEE7F0)),
+                _buildStatCard('Sessions', '15', Color(0xFFDEE7F0)),
                 SizedBox(width: 8),
-                _buildStatCard('Active Profiles', '3', Color(0xFFDEE7F0)),
+                _buildStatCard('Pets', '3', Color(0xFFDEE7F0)),
               ],
             ),
             SizedBox(height: 20),
@@ -129,13 +129,13 @@ class HomeScreen extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: TextStyle(fontSize: 14, color: Colors.black87),
+                style: TextStyle(fontSize: 13, color: Colors.black87),
               ),
               SizedBox(height: 5),
               Text(
                 value,
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 17,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
