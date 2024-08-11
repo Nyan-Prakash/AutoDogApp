@@ -18,7 +18,7 @@ class DiscoverScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: Colors.red[700],
+                color: Color(0xFFB0DFF7),
               ),
               textAlign: TextAlign.center,
             ),
@@ -37,7 +37,7 @@ class DiscoverScreen extends StatelessWidget {
                 // Navigate to the next screen
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red[700],
+                backgroundColor: Color(0xFFB0DFF7),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
@@ -56,7 +56,7 @@ class DiscoverScreen extends StatelessWidget {
                   width: 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: Colors.red[700],
+                    color: Color(0xFFB0DFF7),
                     shape: BoxShape.circle,
                   ),
                 ),

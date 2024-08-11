@@ -12,8 +12,22 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('Dashboard'),
-        backgroundColor: Colors.red[700],
+        title: Text(
+          'Dashboard',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: Color(0xFF8BBBD9),
+        elevation: 4,
+        shadowColor: Color(0xFF5F97B4),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(16),
+          ),
+        ),
         actions: [
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -40,11 +54,11 @@ class HomeScreen extends StatelessWidget {
             SizedBox(height: 10),
             Row(
               children: [
-                _buildStatCard('Training Level', 'Advanced', Colors.red[100]!),
+                _buildStatCard('Training Level', 'Advanced', Color(0xFFDEE7F0)),
                 SizedBox(width: 8),
-                _buildStatCard('Sessions Completed', '15', Colors.red[100]!),
+                _buildStatCard('Sessions Completed', '15', Color(0xFFDEE7F0)),
                 SizedBox(width: 8),
-                _buildStatCard('Active Profiles', '3', Colors.red[100]!),
+                _buildStatCard('Active Profiles', '3', Color(0xFFDEE7F0)),
               ],
             ),
             SizedBox(height: 20),
@@ -79,7 +93,7 @@ class HomeScreen extends StatelessWidget {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.red[700],
+        selectedItemColor: Color(0xFF8BBBD9),
         unselectedItemColor: Colors.grey,
         items: [
           BottomNavigationBarItem(
@@ -109,19 +123,19 @@ class HomeScreen extends StatelessWidget {
       child: Card(
         color: color,
         child: Padding(
-          padding: const EdgeInsets.all(12.0), // Adjust padding to reduce size
+          padding: const EdgeInsets.all(12.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title,
-                style: TextStyle(fontSize: 14, color: Colors.black87), // Reduce font size
+                style: TextStyle(fontSize: 14, color: Colors.black87),
               ),
-              SizedBox(height: 5), // Reduce spacing
+              SizedBox(height: 5),
               Text(
                 value,
                 style: TextStyle(
-                  fontSize: 18, // Reduce font size
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
@@ -136,7 +150,10 @@ class HomeScreen extends StatelessWidget {
   // Build Training Card
   Widget _buildTrainingCard(BuildContext context) {
     return Card(
-      color: Colors.red[700],
+      color: Color(0xFF8BBBD9),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -169,7 +186,7 @@ class HomeScreen extends StatelessWidget {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
-                      foregroundColor: Colors.red[700],
+                      foregroundColor: Color(0xFF8BBBD9),
                     ),
                     child: Text('Start Training'),
                   ),
@@ -198,7 +215,10 @@ class HomeScreen extends StatelessWidget {
   Widget _buildProfileCard(String name, String status, bool selected) {
     return Expanded(
       child: Card(
-        color: selected ? Colors.red[700] : Colors.red[100]!,
+        color: selected ? Color(0xFF8BBBD9) : Color(0xFFDEE7F0),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(

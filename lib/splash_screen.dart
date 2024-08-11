@@ -1,32 +1,34 @@
 import 'package:flutter/material.dart';
 import 'device_selection_screen.dart'; // Import the Device Selection screen
+import 'dart:async'; // Import Timer for delay
 
-class SplashScreen extends StatelessWidget {
+class SplashScreen extends StatefulWidget {
+  @override
+  _SplashScreenState createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Navigate to the next screen after a delay
+    Timer(Duration(seconds: 1), () {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => DeviceSelectionScreen()),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.red[700], // Red background color
+      backgroundColor: Color(0xFFB0DFF7), // Background color
       body: Center(
-        child: ElevatedButton(
-          onPressed: () {
-            // Navigate to Device Selection Screen
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => DeviceSelectionScreen()),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white, // White button background color
-            foregroundColor: Colors.red[700], // Red text color
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-            padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-          ),
-          child: Text(
-            'Start',
-            style: TextStyle(fontSize: 20),
-          ),
+        child: Image.asset(
+          'assets/logo.png', // Replace with your asset image path
+          width: 200,
+          height: 200,
         ),
       ),
     );

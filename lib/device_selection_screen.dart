@@ -78,8 +78,23 @@ class _DeviceSelectionScreenState extends State<DeviceSelectionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Select a Device'),
-        backgroundColor: Colors.red[700], // Red app bar background color
+        title: Text(
+          'Select a Device',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: Color(0xFF8BBBD9), // A slightly darker shade of your primary color
+        elevation: 4,
+        shadowColor: Color(0xFF5F97B4), // Soft shadow color
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(16),
+          ),
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async {

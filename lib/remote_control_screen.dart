@@ -12,7 +12,6 @@ class RemoteControlScreen extends StatefulWidget {
 
 class _RemoteControlScreenState extends State<RemoteControlScreen> {
   BluetoothCharacteristic? targetCharacteristic;
-  TextEditingController _textController = TextEditingController();
 
   @override
   void initState() {
@@ -21,15 +20,14 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
   }
 
   void connectToCharacteristic() async {
-    // Discover services and characteristics
     List<BluetoothService> services = await widget.device.discoverServices();
     for (BluetoothService service in services) {
       for (BluetoothCharacteristic char in service.characteristics) {
-        if (char.properties.write) {  // Automatically select the first writable characteristic
+        if (char.properties.write) {
           setState(() {
             targetCharacteristic = char;
           });
-          return;  // Exit the loop once a characteristic is found
+          return;
         }
       }
     }
@@ -40,11 +38,11 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
     }
   }
 
-  void sendInteger(int value) async {
+  void sendCommand(int value) async {
     if (targetCharacteristic != null) {
       await targetCharacteristic!.write([value]);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Sent value $value')),
+        SnackBar(content: Text('Sent command $value')),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -53,44 +51,91 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
     }
   }
 
+  Widget buildCommandButton(String label, int command) {
+    return ElevatedButton(
+      onPressed: () {
+        sendCommand(command);
+      },
+      style: ElevatedButton.styleFrom(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30.0), // Rounded corners
+        ),
+        padding: EdgeInsets.symmetric(vertical: 20, horizontal: 30), // Adjust padding for button size
+        backgroundColor: Color(0xFF8BBBD9), // Updated background color to match the color scheme
+        foregroundColor: Colors.white, // Text color
+        shadowColor: Colors.black.withOpacity(0.2), // Shadow color
+        elevation: 5, // Elevation for shadow
+      ),
+      child: Text(
+        label,
+        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Remote Control'),
-        backgroundColor: Colors.red[700]!,
+        title: Text(
+          'Remote Control',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: Color(0xFF8BBBD9), // Updated background color to match the color scheme
+        elevation: 4,
+        shadowColor: Color(0xFF5F97B4), // Updated shadow color for consistency
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(16),
+          ),
+        ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _textController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: 'Enter an integer',
-                border: OutlineInputBorder(),
+      body: Center(
+        child: Container(
+          padding: EdgeInsets.all(16.0), // Add padding around the remote layout
+          decoration: BoxDecoration(
+            color: Color(0xFFDEE7F0), // Light background color for remote area
+            borderRadius: BorderRadius.circular(20.0), // Rounded corners for the remote area
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: Offset(0, 5),
               ),
-            ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                int value = int.parse(_textController.text);
-                sendInteger(value);
-              },
-              child: Text('Send Integer'),
-            ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                widget.device.disconnect();
-                setState(() {
-                  targetCharacteristic = null;
-                });
-              },
-              child: Text('Disconnect'),
-            ),
-          ],
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // First column with three buttons: Sit, Free, Come
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  buildCommandButton("Free", 1),
+                  SizedBox(height: 20), // Space between buttons
+                  buildCommandButton("Down", 4),
+                  SizedBox(height: 20), // Space between buttons
+                  buildCommandButton("Come", 6),
+                ],
+              ),
+              SizedBox(width: 30), // Space between columns
+              // Second column with three buttons: Manual, Down, Heel
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  buildCommandButton("Sit", 3),
+                  SizedBox(height: 20), // Space between buttons
+                  buildCommandButton("Heel", 5),
+                  SizedBox(height: 20), // Space between buttons
+                  buildCommandButton("Manual", 2),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
