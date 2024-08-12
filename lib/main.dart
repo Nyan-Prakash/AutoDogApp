@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Import the necessary package
 import 'splash_screen.dart';
+
 void main() {
-  runApp(DogHarnessApp());
+  WidgetsFlutterBinding.ensureInitialized(); // Ensure Flutter bindings are initialized
+
+  // Lock orientation to portrait mode
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]).then((_) {
+    runApp(DogHarnessApp());
+  });
 }
 
 class DogHarnessApp extends StatelessWidget {

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'remote_control_screen.dart';  // Import the Remote Control screen
 import 'community_screen.dart';  // Import the Community screen
+import 'Traing_screen.dart';
+import 'profile_screen.dart';
+import 'history_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final BluetoothDevice device;  // Add a constructor parameter for the device
@@ -32,12 +35,20 @@ class HomeScreen extends StatelessWidget {
         actions: [
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: CircleAvatar(
-              backgroundColor: Colors.blue,
-              child: Icon(
-                Icons.account_circle_rounded,
-                size: 40.0,
-                color: Colors.white,
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ProfileScreen()),
+                );
+              },
+              child: CircleAvatar(
+                backgroundColor: Colors.blue,
+                child: Icon(
+                  Icons.account_circle_rounded,
+                  size: 40.0,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
@@ -104,6 +115,7 @@ class HomeScreen extends StatelessWidget {
           BottomNavigationBarItem(
             icon: Icon(Icons.play_arrow),
             label: 'Training',
+
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.group),
@@ -115,10 +127,21 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
         onTap: (index) {
-          if (index == 2) {  // Navigate to the Community screen
+          if (index == 1) {  // Navigate to the Training screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => TrainingScreen(device: device)),
+            );
+          } else if (index == 2) {  // Navigate to the Community screen
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => CommunityScreen()),
+            );
+          }
+          else if (index == 3) {  // Navigate to the Community screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => HistoryScreen()),
             );
           }
         },
