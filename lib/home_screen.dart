@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'remote_control_screen.dart';  // Import the Remote Control screen
+import 'community_screen.dart';  // Import the Community screen
 
 class HomeScreen extends StatelessWidget {
   final BluetoothDevice device;  // Add a constructor parameter for the device
@@ -32,17 +33,21 @@ class HomeScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: CircleAvatar(
-              backgroundImage: AssetImage('assets/images/dog_profile.jpg'), // Replace with your asset
+              backgroundColor: Colors.blue,
+              child: Icon(
+                Icons.account_circle_rounded,
+                size: 40.0,
+                color: Colors.white,
+              ),
             ),
           ),
         ],
       ),
-      body: SingleChildScrollView( // Wrap with SingleChildScrollView to avoid overflow
+      body: SingleChildScrollView( 
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Greeting and Quick Stats
             Text(
               'Good Afternoon',
               style: TextStyle(
@@ -62,8 +67,6 @@ class HomeScreen extends StatelessWidget {
               ],
             ),
             SizedBox(height: 20),
-
-            // Training Cards
             Text(
               'Current Training Session',
               style: TextStyle(
@@ -75,8 +78,6 @@ class HomeScreen extends StatelessWidget {
             SizedBox(height: 10),
             _buildTrainingCard(context),
             SizedBox(height: 20),
-
-            // User Profile Selection
             Text(
               'Change Dog Profile',
               style: TextStyle(
@@ -105,19 +106,26 @@ class HomeScreen extends StatelessWidget {
             label: 'Training',
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.group),
+            label: "Community",
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.history),
             label: 'History',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
         ],
+        onTap: (index) {
+          if (index == 2) {  // Navigate to the Community screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => CommunityScreen()),
+            );
+          }
+        },
       ),
     );
   }
 
-  // Build Stat Card
   Widget _buildStatCard(String title, String value, Color color) {
     return Expanded(
       child: Card(
@@ -147,7 +155,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Build Training Card
   Widget _buildTrainingCard(BuildContext context) {
     return Card(
       color: Color(0xFF8BBBD9),
@@ -178,7 +185,6 @@ class HomeScreen extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      // Navigate to remote control screen
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => RemoteControlScreen(device: device)),
@@ -199,19 +205,17 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Build Profile Selection
   Widget _buildProfileSelection() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _buildProfileCard('Buddy', 'Active', true),
-        _buildProfileCard('Max', 'Inactive', false),
-        _buildProfileCard('Bella', 'Inactive', false),
+        _buildProfileCard('Gee', 'Active', true),
+        _buildProfileCard('Sonny', 'Inactive', false),
+        _buildProfileCard('Luna', 'Inactive', false),
       ],
     );
   }
 
-  // Build Profile Card
   Widget _buildProfileCard(String name, String status, bool selected) {
     return Expanded(
       child: Card(

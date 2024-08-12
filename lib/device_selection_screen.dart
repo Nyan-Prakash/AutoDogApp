@@ -59,12 +59,29 @@ class _DeviceSelectionScreenState extends State<DeviceSelectionScreen> {
   }
 
   void connectToDevice(BluetoothDevice device) async {
-    await device.connect();
-    if (mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => HomeScreen(device: device)),
+    setState(() {
+      isScanning = true; // Indicate that a connection attempt is ongoing
+    });
+
+    try {
+      await device.connect();
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => HomeScreen(device: device)),
+        );
+      }
+    } catch (e) {
+      // Handle any errors here
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to connect to the device: ${device.name}')),
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          isScanning = false; // Reset the scanning indicator
+        });
+      }
     }
   }
 

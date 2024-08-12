@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
+import 'dart:convert';
 
 class RemoteControlScreen extends StatefulWidget {
   final BluetoothDevice device;
@@ -11,37 +12,88 @@ class RemoteControlScreen extends StatefulWidget {
 }
 
 class _RemoteControlScreenState extends State<RemoteControlScreen> {
-  BluetoothCharacteristic? targetCharacteristic;
+  BluetoothCharacteristic? writeCharacteristic;
+  BluetoothCharacteristic? notifyCharacteristic;
+  String receivedString = "No command received yet"; // Initialize with a default message
 
   @override
   void initState() {
     super.initState();
-    connectToCharacteristic();
+    connectToCharacteristics();
   }
 
-  void connectToCharacteristic() async {
+  void connectToCharacteristics() async {
     List<BluetoothService> services = await widget.device.discoverServices();
+    print("Services discovered: ${services.length}");
     for (BluetoothService service in services) {
       for (BluetoothCharacteristic char in service.characteristics) {
+        print("Characteristic UUID: ${char.uuid}");
+        print("Properties: ${char.properties}");
+
+        // Identify and set the write characteristic
         if (char.properties.write) {
           setState(() {
-            targetCharacteristic = char;
+            writeCharacteristic = char;
           });
-          return;
+          _showFeedback('Write Characteristic found');
+        }
+
+        // Identify and set the notify characteristic
+        if (char.properties.notify) {
+          setState(() {
+            notifyCharacteristic = char;
+          });
+          _showFeedback('Notify Characteristic found');
+          listenForCommands(); // Start listening for notifications
         }
       }
     }
-    if (targetCharacteristic == null) {
-      _showFeedback('No writable characteristic found!');
+    if (writeCharacteristic == null || notifyCharacteristic == null) {
+      _showFeedback('Required characteristics not found!');
     }
   }
 
-  void sendCommand(int value) async {
-    if (targetCharacteristic != null) {
-      await targetCharacteristic!.write([value]);
-      _showFeedback('Sent command $value');
+  void listenForCommands() async {
+    if (notifyCharacteristic != null) {
+      try {
+        bool isNotifying = await notifyCharacteristic!.setNotifyValue(true);
+        if (isNotifying) {
+          _showFeedback('Notifications enabled');
+          notifyCharacteristic!.value.listen((value) {
+            if (value.isNotEmpty) {
+              try {
+                String newReceivedString = utf8.decode(value);
+                setState(() {
+                  receivedString = newReceivedString;
+                });
+                _showFeedback('Received string: $newReceivedString');
+              } catch (e) {
+                _showFeedback('Failed to decode string: $e');
+              }
+            }
+          });
+        } else {
+          _showFeedback('Failed to enable notifications');
+        }
+      } catch (e) {
+        _showFeedback('Error enabling notifications: $e');
+      }
     } else {
-      _showFeedback('Characteristic not found!');
+      _showFeedback('Notify Characteristic not found!');
+    }
+  }
+
+  void sendStringCommand(String strValue) async {
+    if (writeCharacteristic != null) {
+      try {
+        List<int> data = utf8.encode(strValue); // Convert the string to UTF-8 bytes
+        await writeCharacteristic!.write(data);
+        _showFeedback('Sent command: $strValue');
+      } catch (e) {
+        _showFeedback('Failed to send command: $e');
+      }
+    } else {
+      _showFeedback('Write Characteristic not found!');
     }
   }
 
@@ -54,10 +106,10 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
     );
   }
 
-  Widget buildCommandButton(String label, int command) {
+  Widget buildCommandButton(String label, String command) {
     return ElevatedButton(
       onPressed: () {
-        sendCommand(command);
+        sendStringCommand(command);
       },
       style: ElevatedButton.styleFrom(
         shape: RoundedRectangleBorder(
@@ -98,47 +150,78 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
         ),
       ),
       body: Center(
-        child: Container(
-          padding: EdgeInsets.all(16.0), // Add padding around the remote layout
-          decoration: BoxDecoration(
-            color: Color(0xFFDEE7F0), // Light background color for remote area
-            borderRadius: BorderRadius.circular(20.0), // Rounded corners for the remote area
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 10,
-                offset: Offset(0, 5),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // First column with three buttons: Sit, Free, Come
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  buildCommandButton("Free", 1),
-                  SizedBox(height: 20), // Space between buttons
-                  buildCommandButton("Down", 4),
-                  SizedBox(height: 20), // Space between buttons
-                  buildCommandButton("Come", 6),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: EdgeInsets.all(16.0), // Add padding around the displayed string
+              decoration: BoxDecoration(
+                color: Color(0xFFDEE7F0), // Light background color for the string display area
+                borderRadius: BorderRadius.circular(10.0), // Rounded corners for the string display area
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: Offset(0, 5),
+                  ),
                 ],
               ),
-              SizedBox(width: 30), // Space between columns
-              // Second column with three buttons: Manual, Down, Heel
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  buildCommandButton("Sit", 3),
-                  SizedBox(height: 20), // Space between buttons
-                  buildCommandButton("Heel", 5),
-                  SizedBox(height: 20), // Space between buttons
-                  buildCommandButton("Manual", 2),
+              child: Text(
+                receivedString,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87, // Text color
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            SizedBox(height: 30), // Space between the string display and the remote buttons
+            Container(
+              padding: EdgeInsets.all(16.0), // Add padding around the remote layout
+              decoration: BoxDecoration(
+                color: Color(0xFFDEE7F0), // Light background color for remote area
+                borderRadius: BorderRadius.circular(20.0), // Rounded corners for the remote area
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: Offset(0, 5),
+                  ),
                 ],
               ),
-            ],
-          ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                   Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      buildCommandButton("Free", "1"),
+                      SizedBox(height: 20),
+                      buildCommandButton("Manual", "2"),
+                      SizedBox(height: 20),
+                      buildCommandButton("Heel", "5"),
+
+
+                    ],
+                   ),
+                   SizedBox(width: 30),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        buildCommandButton("Sit", "3"),
+                        SizedBox(height: 20),
+                        buildCommandButton("Down", "4"),
+                        SizedBox(height: 20),
+                        buildCommandButton("Come", "6"),
+
+
+                    ],
+                   ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
