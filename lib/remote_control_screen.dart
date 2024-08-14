@@ -74,28 +74,65 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> with SingleTi
   }
 
   void listenForCommands() async {
-    if (notifyCharacteristic != null) {
-      try {
-        await notifyCharacteristic!.setNotifyValue(true);
-        notifyCharacteristic!.value.listen((value) {
-          if (value.isNotEmpty) {
-            try {
-              String newReceivedString = utf8.decode(value);
-              setState(() {
-                receivedString = newReceivedString;
-              });
-            } catch (e) {
-              _showFeedback('Failed to decode string: $e');
-            }
+  if (notifyCharacteristic != null) {
+    try {
+      await notifyCharacteristic!.setNotifyValue(true);
+      notifyCharacteristic!.value.listen((value) {
+        if (value.isNotEmpty) {
+          try {
+            String jsonString = utf8.decode(value);
+            List<dynamic> jsonData = jsonDecode(jsonString);
+            CommandData receivedCommand = CommandData.fromJson(jsonData);
+
+            setState(() {
+              if(receivedCommand.currentMode == 1)
+              {
+                receivedString = "Free";
+              }
+              else if(receivedCommand.currentMode == 2)
+              {
+                receivedString = "Manual";
+              }
+              else if(receivedCommand.currentMode == 3)
+              {
+                receivedString = "Sit";
+              }
+              else if(receivedCommand.currentMode == 4)
+              {
+                receivedString = "Down";
+              }
+              else if(receivedCommand.currentMode == 5)
+              {
+                receivedString = "Heel";
+              }
+              else if(receivedCommand.currentMode == 6)
+              {
+                receivedString = "Come";
+              }
+              if(receivedCommand.isDogABadBoy == true)
+              {
+                _showCorrectionFeedback("Applying Correction");
+              }
+              if(receivedCommand.isDogAGoodBoy == true)
+              {
+                _showCorrectionFeedback("Give Treat");
+              }
+
+
+            });
+          } catch (e) {
+            _showFeedback('Failed to decode string: $e');
           }
-        });
-      } catch (e) {
-        _showFeedback('Error enabling notifications: $e');
-      }
-    } else {
-      _showFeedback('Notify Characteristic not found!');
+        }
+      });
+    } catch (e) {
+      _showFeedback('Error enabling notifications: $e');
     }
+  } else {
+    _showFeedback('Notify Characteristic not found!');
   }
+}
+
 
   void sendStringCommand(String strValue) async {
     if (writeCharacteristic != null) {
@@ -110,6 +147,21 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> with SingleTi
       _showFeedback('Write Characteristic not found!');
     }
   }
+  void sendCommandData(CommandData commandData) async {
+  if (writeCharacteristic != null) {
+    try {
+      String jsonString = jsonEncode(commandData.toJson());
+      List<int> data = utf8.encode(jsonString);
+      await writeCharacteristic!.write(data);
+      _showFeedback('Sent command: $jsonString');
+    } catch (e) {
+      _showFeedback('Failed to send command: $e');
+    }
+  } else {
+    _showFeedback('Write Characteristic not found!');
+  }
+}
+
 
   void _showFeedback(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -134,10 +186,26 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> with SingleTi
     );
   }
 
-  Widget buildCommandButton(String label, String command) {
+  void _showCorrectionFeedback(String message) {
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        duration: Duration(seconds: 1),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
+  Widget buildCommandButton(String label, int command) {
     return ElevatedButton(
       onPressed: () {
-        sendStringCommand(command);
+        sendCommandData(CommandData(currentMode: command, isDogABadBoy: true, isDogAGoodBoy: false));
+
+        
         if (label == "Treat") {
           playConfettiAnimation();
           _showTreatFeedback("Give Treat");
@@ -145,6 +213,7 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> with SingleTi
       },
       style: ElevatedButton.styleFrom(
         shape: RoundedRectangleBorder(
+
           borderRadius: BorderRadius.circular(30.0),
         ),
         padding: EdgeInsets.symmetric(vertical: 20, horizontal: 30),
@@ -226,24 +295,24 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> with SingleTi
                       Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          buildCommandButton("Free", "1"),
+                          buildCommandButton("Free", 1),
                           SizedBox(height: 20),
-                          buildCommandButton("Manual", "2"),
+                          buildCommandButton("Manual", 2),
                           SizedBox(height: 20),
-                          buildCommandButton("Heel", "5"),
+                          buildCommandButton("Heel", 5),
                           SizedBox(height: 20),
-                          buildCommandButton("Treat", "7"),
+                          buildCommandButton("Treat", 7),
                         ],
                       ),
                       SizedBox(width: 30),
                       Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          buildCommandButton("Sit", "3"),
+                          buildCommandButton("Sit", 3),
                           SizedBox(height: 20),
-                          buildCommandButton("Down", "4"),
+                          buildCommandButton("Down", 4),
                           SizedBox(height: 20),
-                          buildCommandButton("Come", "6"),
+                          buildCommandButton("Come", 6),
                         ],
                       ),
                     ],
@@ -311,4 +380,25 @@ class ConfettiPainter extends CustomPainter {
     return true;
   }
 }
+
+class CommandData {
+  final int currentMode;
+  final bool isDogAGoodBoy;
+  final bool isDogABadBoy;
+
+  CommandData({required this.currentMode, required this.isDogAGoodBoy, required this.isDogABadBoy});
+
+  // Convert a CommandData object into a list of values.
+  List<dynamic> toJson() => [currentMode, isDogAGoodBoy, isDogABadBoy];
+
+  // Create a CommandData object from a list of values.
+  factory CommandData.fromJson(List<dynamic> json) {
+    return CommandData(
+      currentMode: json[0] as int,
+      isDogAGoodBoy: json[1] as bool,
+      isDogABadBoy: json[2] as bool,
+    );
+  }
+}
+
 
