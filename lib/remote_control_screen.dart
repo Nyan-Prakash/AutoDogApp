@@ -115,7 +115,7 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> with SingleTi
               }
               if(receivedCommand.isDogAGoodBoy == true)
               {
-                _showCorrectionFeedback("Give Treat");
+                _showTreatFeedback("Give Treat");
               }
 
 
@@ -148,7 +148,18 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> with SingleTi
     }
   }
   void sendCommandData(CommandData commandData) async {
-  if (writeCharacteristic != null) {
+    bool isSure;
+    if(commandData.currentMode == 77)
+    {
+      isSure = await _showConfirmationDialog(context, 'send this command');
+    }
+    else
+    {
+      isSure = true;
+    }
+  if(isSure)
+  {
+    if (writeCharacteristic != null) {
     try {
       String jsonString = jsonEncode(commandData.toJson());
       List<int> data = utf8.encode(jsonString);
@@ -160,7 +171,35 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> with SingleTi
   } else {
     _showFeedback('Write Characteristic not found!');
   }
+  }
 }
+  Future<bool> _showConfirmationDialog(BuildContext context, String actionName) async {
+  return await showDialog(
+    context: context,
+    barrierDismissible: false,  // Prevent dismissing the dialog by tapping outside of it
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Confirm $actionName'),
+        content: Text('Are you sure you want to $actionName?'),
+        actions: <Widget>[
+          TextButton(
+            child: Text('No'),
+            onPressed: () {
+              Navigator.of(context).pop(false);  // Return false when "No" is pressed
+            },
+          ),
+          TextButton(
+            child: Text('Yes'),
+            onPressed: () {
+              Navigator.of(context).pop(true);  // Return true when "Yes" is pressed
+            },
+          ),
+        ],
+      );
+    },
+  ) ?? false;  // Return false if the dialog is dismissed without pressing Yes or No
+}
+
 
 
   void _showFeedback(String message) {
@@ -203,7 +242,7 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> with SingleTi
   Widget buildCommandButton(String label, int command) {
     return ElevatedButton(
       onPressed: () {
-        sendCommandData(CommandData(currentMode: command, isDogABadBoy: true, isDogAGoodBoy: false));
+        sendCommandData(CommandData(currentMode: command, isDogABadBoy: false, isDogAGoodBoy: false));
 
         
         if (label == "Treat") {
@@ -250,11 +289,12 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> with SingleTi
         ),
       ),
       body: Stack(
-        alignment: Alignment.center,
-        children: [
-          Center(
+      children: [
+        SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 60.0), // Adjust this value to control how high it shifts
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Container(
                   padding: EdgeInsets.all(16.0),
@@ -299,9 +339,9 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> with SingleTi
                           SizedBox(height: 20),
                           buildCommandButton("Manual", 2),
                           SizedBox(height: 20),
-                          buildCommandButton("Heel", 5),
+                          buildCommandButton("Heel", 5),                          
                           SizedBox(height: 20),
-                          buildCommandButton("Treat", 7),
+                          buildCommandButton("Calibrate", 7),
                         ],
                       ),
                       SizedBox(width: 30),
@@ -313,6 +353,8 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> with SingleTi
                           buildCommandButton("Down", 4),
                           SizedBox(height: 20),
                           buildCommandButton("Come", 6),
+                          SizedBox(height: 20),
+                          buildCommandButton("Reset", 77),
                         ],
                       ),
                     ],
@@ -321,6 +363,7 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> with SingleTi
               ],
             ),
           ),
+        ),
           if (_controller.isAnimating)
             Positioned.fill(
               child: CustomPaint(
