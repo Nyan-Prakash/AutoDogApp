@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'dart:convert';
 import 'dart:math';
+import 'package:flutter_application_1/globals.dart' as globals;
+
 
 class RemoteControlScreen extends StatefulWidget {
   final BluetoothDevice device;
@@ -41,6 +43,28 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> with SingleTi
     _controller.dispose();
     super.dispose();
   }
+String modeToString(int mode) {
+  switch (mode) {
+    case 1:
+      return "Free";
+    case 2:
+      return "Manual";
+    case 3:
+      return "Sit";
+    case 4:
+      return "Down";
+    case 5:
+      return "Heel";
+    case 6:
+      return "Come";
+    case 7:
+      return "Calibrate";
+    case 77:
+      return "Reset";
+    default:
+      return "Unknown Mode"; // Fallback for unexpected values
+  }
+}
 
   void connectToCharacteristics() async {
     final targetServiceUUID = Guid("12345678-1234-1234-1234-123456789abc");
@@ -85,30 +109,7 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> with SingleTi
             CommandData receivedCommand = CommandData.fromJson(jsonData);
 
             setState(() {
-              if(receivedCommand.currentMode == 1)
-              {
-                receivedString = "Free";
-              }
-              else if(receivedCommand.currentMode == 2)
-              {
-                receivedString = "Manual";
-              }
-              else if(receivedCommand.currentMode == 3)
-              {
-                receivedString = "Sit";
-              }
-              else if(receivedCommand.currentMode == 4)
-              {
-                receivedString = "Down";
-              }
-              else if(receivedCommand.currentMode == 5)
-              {
-                receivedString = "Heel";
-              }
-              else if(receivedCommand.currentMode == 6)
-              {
-                receivedString = "Come";
-              }
+              globals.mode = modeToString(receivedCommand.currentMode);
               if(receivedCommand.isDogABadBoy == true)
               {
                 _showCorrectionFeedback("Applying Correction");
@@ -117,6 +118,7 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> with SingleTi
               {
                 _showTreatFeedback("Give Treat");
               }
+              
 
 
             });
@@ -149,6 +151,7 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> with SingleTi
   }
   void sendCommandData(CommandData commandData) async {
     bool isSure;
+    
     if(commandData.currentMode == 77)
     {
       isSure = await _showConfirmationDialog(context, 'send this command');
@@ -159,6 +162,10 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> with SingleTi
     }
   if(isSure)
   {
+    setState(() {
+        globals.mode = modeToString(commandData.currentMode);
+    });
+
     if (writeCharacteristic != null) {
     try {
       String jsonString = jsonEncode(commandData.toJson());
@@ -310,7 +317,7 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> with SingleTi
                     ],
                   ),
                   child: Text(
-                    receivedString,
+                    globals.mode,
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
                     textAlign: TextAlign.center,
                   ),

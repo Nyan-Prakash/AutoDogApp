@@ -7,10 +7,15 @@ import 'profile_screen.dart';
 import 'history_screen.dart';
 
 class HomeScreen extends StatelessWidget {
-  final BluetoothDevice device;  // Add a constructor parameter for the device
+  final BluetoothDevice device;
+  final BluetoothCharacteristic writeCharacteristic;
+  final BluetoothCharacteristic notifyCharacteristic;
 
-  HomeScreen({required this.device});  // Require the device parameter
-
+  HomeScreen({
+    required this.device,
+    required this.writeCharacteristic,
+    required this.notifyCharacteristic,
+  });
   @override
   Widget build(BuildContext context) {
     return Scaffold(
