@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_blue/flutter_blue.dart';
+import 'package:flutter_application_1/Loading_screen.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'home_screen.dart';
+import 'Loading_screen.dart';
 
 class DeviceSelectionScreen extends StatefulWidget {
   @override
@@ -8,7 +11,7 @@ class DeviceSelectionScreen extends StatefulWidget {
 }
 
 class _DeviceSelectionScreenState extends State<DeviceSelectionScreen> {
-  FlutterBlue flutterBlue = FlutterBlue.instance;
+  FlutterBluePlus flutterBlue = FlutterBluePlus();
   List<BluetoothDevice> connectedDevices = [];
   List<ScanResult> scanResults = [];
   bool isScanning = false;
@@ -16,12 +19,46 @@ class _DeviceSelectionScreenState extends State<DeviceSelectionScreen> {
   @override
   void initState() {
     super.initState();
-    startScan();
-    fetchConnectedDevices();
+    checkPermissionsAndStart();
+  }
+
+  Future<void> checkPermissionsAndStart() async {
+    // Check Bluetooth permissions
+    if (await _checkPermissions()) {
+      fetchConnectedDevices();
+      startScan();
+    } else {
+      // Handle the case where permissions are not granted
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Bluetooth permissions are required to use this feature.')),
+      );
+    }
+  }
+
+  Future<bool> _checkPermissions() async {
+    if (await Permission.bluetooth.isGranted &&
+        await Permission.bluetoothScan.isGranted &&
+        await Permission.bluetoothConnect.isGranted) {
+      return true;
+    } else {
+      // Request permissions
+      Map<Permission, PermissionStatus> statuses = await [
+        Permission.bluetooth,
+        Permission.bluetoothScan,
+        Permission.bluetoothConnect,
+        Permission.location,  // Needed for Bluetooth scanning in some cases
+      ].request();
+
+      return statuses[Permission.bluetooth]!.isGranted &&
+             statuses[Permission.bluetoothScan]!.isGranted &&
+             statuses[Permission.bluetoothConnect]!.isGranted &&
+             statuses[Permission.location]!.isGranted;
+    }
   }
 
   Future<void> fetchConnectedDevices() async {
-    var devices = await flutterBlue.connectedDevices;
+    // Retrieve connected devices
+    var devices = await FlutterBluePlus.systemDevices;
     setState(() {
       connectedDevices = devices;
     });
@@ -33,29 +70,19 @@ class _DeviceSelectionScreenState extends State<DeviceSelectionScreen> {
       isScanning = true;
     });
 
-    flutterBlue.startScan(timeout: Duration(seconds: 5)).then((_) {
-      if (mounted) {
-        setState(() {
-          isScanning = false;
-        });
-      }
+    // Listen for scan results
+    FlutterBluePlus.scanResults.listen((results) {
+      setState(() {
+        scanResults = results;
+      });
     });
 
-    flutterBlue.scanResults.listen((results) {
-      if (mounted) {
-        setState(() {
-          scanResults = results;
-        });
-      }
-    });
-
-    await Future.delayed(Duration(seconds: 5));
-    if (mounted) {
-      flutterBlue.stopScan();
+    // Start scanning
+    FlutterBluePlus.startScan(timeout: const Duration(seconds: 5)).whenComplete(() {
       setState(() {
         isScanning = false;
       });
-    }
+    });
   }
 
   void connectToDevice(BluetoothDevice device) async {
@@ -64,13 +91,26 @@ class _DeviceSelectionScreenState extends State<DeviceSelectionScreen> {
     });
 
     try {
-      await device.connect();
-      if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => HomeScreen(device: device)),
-        );
-      }
+      // Check if the device is already connected
+      BluetoothConnectionState connectionState = await device.connectionState.first;
+      if (connectionState == BluetoothConnectionState.connected) {
+        // Device is already connected, go to LoadingScreen
+        if (mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => LoadingScreen(device: device))
+          );
+        }
+      } else {
+        // Device is not connected, attempt to connect
+        await device.connect();
+        if (mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => LoadingScreen(device: device)),
+          );
+        }
+      } 
     } catch (e) {
       // Handle any errors here
       ScaffoldMessenger.of(context).showSnackBar(
@@ -87,7 +127,7 @@ class _DeviceSelectionScreenState extends State<DeviceSelectionScreen> {
 
   @override
   void dispose() {
-    flutterBlue.stopScan(); // Stop scanning when the widget is disposed
+    FlutterBluePlus.stopScan(); // Stop scanning when the widget is disposed
     super.dispose();
   }
 
@@ -95,7 +135,7 @@ class _DeviceSelectionScreenState extends State<DeviceSelectionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Select a Device',
           style: TextStyle(
             color: Colors.white,
@@ -104,10 +144,10 @@ class _DeviceSelectionScreenState extends State<DeviceSelectionScreen> {
           ),
         ),
         centerTitle: true,
-        backgroundColor: Color(0xFF8BBBD9), // A slightly darker shade of your primary color
+        backgroundColor: const Color(0xFF8BBBD9),
         elevation: 4,
-        shadowColor: Color(0xFF5F97B4), // Soft shadow color
-        shape: RoundedRectangleBorder(
+        shadowColor: const Color(0xFF5F97B4),
+        shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
             bottom: Radius.circular(16),
           ),
@@ -119,22 +159,22 @@ class _DeviceSelectionScreenState extends State<DeviceSelectionScreen> {
           await fetchConnectedDevices(); // Refresh the connected devices
         },
         child: ListView(
-          padding: EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16.0),
           children: [
             if (connectedDevices.isNotEmpty) ...[
-              Text(
+              const Text(
                 'Connected Devices',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               _buildConnectedDeviceList(),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
             ],
-            Text(
+            const Text(
               'New Devices',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             _buildNewDeviceList(),
           ],
         ),
@@ -146,19 +186,19 @@ class _DeviceSelectionScreenState extends State<DeviceSelectionScreen> {
     return Column(
       children: connectedDevices.map((device) {
         return Card(
-          margin: EdgeInsets.symmetric(vertical: 8.0),
+          margin: const EdgeInsets.symmetric(vertical: 8.0),
           elevation: 4,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
           child: ListTile(
-            leading: Icon(Icons.devices, color: Colors.green),
+            leading: const Icon(Icons.devices, color: Colors.green),
             title: Text(
               device.name.isNotEmpty ? device.name : "Unnamed Device",
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            subtitle: Text(device.id.toString()),
-            trailing: Icon(Icons.check_circle, color: Colors.green),
+            subtitle: Text(device.remoteId.toString()),
+            trailing: const Icon(Icons.check_circle, color: Colors.green),
             onTap: () {
               connectToDevice(device);
             },
@@ -170,25 +210,25 @@ class _DeviceSelectionScreenState extends State<DeviceSelectionScreen> {
 
   Widget _buildNewDeviceList() {
     if (isScanning && scanResults.isEmpty) {
-      return Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator());
     }
 
     return Column(
       children: scanResults.map((result) {
         return Card(
-          margin: EdgeInsets.symmetric(vertical: 8.0),
+          margin: const EdgeInsets.symmetric(vertical: 8.0),
           elevation: 4,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
           child: ListTile(
-            leading: Icon(Icons.bluetooth, color: Colors.blue),
+            leading: const Icon(Icons.bluetooth, color: Colors.blue),
             title: Text(
               result.device.name.isNotEmpty ? result.device.name : "Unnamed Device",
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            subtitle: Text(result.device.id.toString()),
-            trailing: Icon(Icons.add_circle_outline, color: Colors.blue),
+            subtitle: Text(result.device.remoteId.toString()),
+            trailing: const Icon(Icons.add_circle_outline, color: Colors.blue),
             onTap: () {
               connectToDevice(result.device);
             },

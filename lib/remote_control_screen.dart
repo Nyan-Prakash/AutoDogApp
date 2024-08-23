@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_blue/flutter_blue.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'dart:convert';
 import 'dart:math';
+import 'services/SoundService.dart';
 
 class RemoteControlScreen extends StatefulWidget {
   final BluetoothDevice device;
@@ -18,6 +19,8 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> with SingleTi
   String receivedString = "No command received yet";
   late AnimationController _controller;
   late List<ConfettiParticle> _particles;
+
+  SoundService soundService = SoundService();
   
   @override
   void initState() {
@@ -113,8 +116,10 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> with SingleTi
               {
                 _showCorrectionFeedback("Applying Correction");
               }
-              if(receivedCommand.isDogAGoodBoy == true)
+              if(receivedCommand.doesDogDeservedAReward == true)
               {
+                soundService.setVolume(20.0);
+                soundService.playSound('sounds/positive.mp3');
                 _showTreatFeedback("Give Treat");
               }
 
@@ -242,7 +247,7 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> with SingleTi
   Widget buildCommandButton(String label, int command) {
     return ElevatedButton(
       onPressed: () {
-        sendCommandData(CommandData(currentMode: command, isDogABadBoy: false, isDogAGoodBoy: false));
+        sendCommandData(CommandData(currentMode: command, isDogABadBoy: false, doesDogDeservedAReward: false));
 
         
         if (label == "Treat") {
@@ -422,22 +427,21 @@ class ConfettiPainter extends CustomPainter {
 
 class CommandData {
   final int currentMode;
-  final bool isDogAGoodBoy;
+  final bool doesDogDeservedAReward;
   final bool isDogABadBoy;
 
-  CommandData({required this.currentMode, required this.isDogAGoodBoy, required this.isDogABadBoy});
+  CommandData({required this.currentMode, required this.doesDogDeservedAReward, required this.isDogABadBoy});
 
   // Convert a CommandData object into a list of values.
-  List<dynamic> toJson() => [currentMode, isDogAGoodBoy, isDogABadBoy];
+  List<dynamic> toJson() => [currentMode, doesDogDeservedAReward, isDogABadBoy];
 
   // Create a CommandData object from a list of values.
   factory CommandData.fromJson(List<dynamic> json) {
     return CommandData(
       currentMode: json[0] as int,
-      isDogAGoodBoy: json[1] as bool,
+      doesDogDeservedAReward: json[1] as bool,
       isDogABadBoy: json[2] as bool,
     );
   }
 }
-
 

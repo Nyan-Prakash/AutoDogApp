@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_blue/flutter_blue.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'remote_control_screen.dart';  // Import the Remote Control screen
 import 'community_screen.dart';  // Import the Community screen
 import 'Traing_screen.dart';
@@ -9,7 +9,7 @@ import 'history_screen.dart';
 class HomeScreen extends StatelessWidget {
   final BluetoothDevice device;  // Add a constructor parameter for the device
 
-  HomeScreen({required this.device});  // Require the device parameter
+  HomeScreen({required this.device, required BluetoothCharacteristic writeCharacteristic, required BluetoothCharacteristic notifyCharacteristic});  // Require the device parameter
 
   @override
   Widget build(BuildContext context) {
@@ -63,22 +63,15 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             SizedBox(height: 10),
-            /*
+            
             Row(
               children: [
-                _buildStatCard('Training Level', 'Expert', Color(0xFFDEE7F0)),
-                SizedBox(width: 8),
-                _buildStatCard('Sessions', '15', Color(0xFFDEE7F0)),
-                SizedBox(width: 8),
-                _buildStatCard('Pets', '3', Color(0xFFDEE7F0)),
               ],
             ),
-            */
             
             SizedBox(height: 10),
             _buildTrainingCard(context),
-            SizedBox(height: 20)
-            
+   
           ],
         ),
       ),
@@ -101,12 +94,7 @@ class HomeScreen extends StatelessWidget {
             icon: Icon(Icons.group),
             label: "Community",
           ),
-          /*
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'History',
-          ),
-          */
+          
         ],
         onTap: (index) {
           if (index == 1) {  // Navigate to the Training screen
